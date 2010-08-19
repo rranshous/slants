@@ -16,10 +16,10 @@ class Sim(object):
 
         self.gravity = (0.0,-900)
 
-        self.max_time = 3 # s
-
-        self.physics_dt = 1.0/90
+        self.physics_dt = 1.0/60
         self.physics_update_counter = 0
+
+        self.max_time = 100 * self.physics_dt # s
 
         self.screen_update_ratio = 1.0/90
 
@@ -90,7 +90,7 @@ class Sim(object):
 
             self.handle_events()
 
-            if self.screen_update_ratio * self.physics_update_counter == 1:
+            if self.screen_update_ratio * 100 == self.physics_update_counter:
                 self.update_scene()
                 self.physics_update_counter = 0
 

@@ -37,17 +37,26 @@ class SlantSim(Sim):
 
         self.gravity = pm.Vec2d(0.0,-900)
 
+        self.physics_dt = 1.0/60
+        self.screen_update_ratio = .5
+
         self.score = 0
 
         self.platform_data = [ ]
 
         self.board_name = ''
 
-        self.screen_update_ratio = 1.0/40
-
-        self.min_collision_frequency = .1
-
+        # variables for handling movement detection
         self.last_collision = None
+        self.ball_min_movement = self.physics_dt / 2
+        self.previous_position_diff = 1000
+        self.previous_position_diff_diff = 1000
+        self.ball_position_lookup = {}
+        self.diff_check_frequency = .1
+        self.diff_check_counter = 0
+        self.moving = False
+        self.no_movement_count = 0
+        self.max_no_movement = 10
 
         self.to_remove_from_space = []
 
@@ -158,7 +167,7 @@ class SlantSim(Sim):
         # to kill off the balls that miss
         body = pm.Body(pm.inf, pm.inf)
         shape = pm.Segment(body,
-                           (0,-1),(self.screen_width,-1),
+                           (0,0),(self.screen_width,0),
                            self.pad_width)
         shape.collision_type = COLLTYPE_PAD
         shape.collision_value = -1
@@ -166,10 +175,10 @@ class SlantSim(Sim):
         self.pads.append(shape)
 
         # and on the walls
-        points = (((-1,-1),
-                   (-1,self.screen_height+1)),
-                  ((self.screen_width+1,-1),
-                   (self.screen_width+1,self.screen_height+1)))
+        points = (((0,0),
+                   (0,self.screen_height)),
+                  ((self.screen_width,0),
+                   (self.screen_width,self.screen_height)))
         for p1,p2 in points:
             body = pm.Body(pm.inf, pm.inf)
             shape = pm.Segment(body,p1,p2,self.pad_width)
@@ -215,12 +224,11 @@ class SlantSim(Sim):
     def handle_pad_collision(self, space, arbiter):
         # we need to add the pads value to our score and remove
         # the ball that hit it
-        self.last_collision = time()
 
         s1,s2 = arbiter.shapes
 
         if s1 is None:
-            return Truea
+            return True
 
         # if we hit the bottom bar, remove the ball, no points
         if s1.collision_value == -1 and s2 in self.balls:
@@ -301,10 +309,43 @@ class SlantSim(Sim):
 
         super(SlantSim,self).update_physics()
 
-        if not self.last_collision:
-            self.last_collision = time()
-        if time() - self.last_collision > self.min_collision_frequency:
-            self.running = False
+        # trying to figure out if more than the min amount of
+        # movement has occured
+        self.diff_check_counter += 1
+        if self.diff_check_frequency * 100 == self.diff_check_counter:
+            self.diff_check_counter = 0
+
+            position_diff = 0
+            for ball in self.balls:
+                prev_pos = self.ball_position_lookup.get(ball)
+                if prev_pos:
+                    position_diff += abs(prev_pos[0]-ball.body.position[0])
+                    position_diff += abs(prev_pos[1]-ball.body.position[1])
+                self.ball_position_lookup[ball] = list(ball.body.position)
+
+            # the difference in movement from the last check
+            diff = abs(position_diff - self.previous_position_diff)
+
+            # update our previous diff to current
+            self.previous_position_diff = position_diff
+
+            # change in change
+            position_diff_diff = abs(diff-self.previous_position_diff_diff)
+            self.previous_position_diff_diff = diff
+
+            # are we moving ? are we moving enough?
+            min_movement = self.ball_min_movement * len(self.balls)
+            if self.moving and position_diff_diff < self.ball_min_movement:
+                self.no_movement_count += 1
+            else:
+                self.no_movement_counter = 0
+
+            if self.no_movement_count > self.max_no_movement:
+                self.running = False
+
+            self.moving = True
+
+
 
     def wrap_up(self):
         print 'score:',self.score

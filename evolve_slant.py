@@ -19,8 +19,8 @@ BOARD = 'bigger'
 board_data = get_board_data(BOARD)
 platform_count = len(board_data.get('platforms'))
 
-sim = SlantSim()
-#sim = HeadlessSlantSim()
+#sim = SlantSim()
+sim = HeadlessSlantSim()
 
 loop_counter = 0
 start_time = None
