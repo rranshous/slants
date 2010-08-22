@@ -56,7 +56,7 @@ class SlantSim(Sim):
         self.diff_check_counter = 0
         self.moving = False
         self.no_movement_count = 0
-        self.max_no_movement = 10
+        self.max_no_movement = 5
 
         self.to_remove_from_space = []
 
@@ -338,14 +338,13 @@ class SlantSim(Sim):
             if self.moving and position_diff_diff < self.ball_min_movement:
                 self.no_movement_count += 1
             else:
-                self.no_movement_counter = 0
+                self.no_movement_count = 0
 
             if self.no_movement_count > self.max_no_movement:
+                print 'STOPPING'
                 self.running = False
 
             self.moving = True
-
-
 
     def wrap_up(self):
         print 'score:',self.score
@@ -356,6 +355,9 @@ class SlantSim(Sim):
         self.balls = []
         self.pads = []
         self.lines = []
+        self.ball_position_lookup = {}
+        pm.init_pymunk()
+        pm.reset_shapeid_counter()
 
         self.__init__()
 

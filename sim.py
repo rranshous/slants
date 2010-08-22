@@ -19,7 +19,7 @@ class Sim(object):
         self.physics_dt = 1.0/60
         self.physics_update_counter = 0
 
-        self.max_time = 100 * self.physics_dt # s
+        self.max_time = 1000 * self.physics_dt # s
 
         self.screen_update_ratio = 1.0/90
 
@@ -87,6 +87,7 @@ class Sim(object):
         while self.is_running():
             if time() - start_time > self.max_time:
                 self.running = False
+                print 'time out'
 
             self.handle_events()
 

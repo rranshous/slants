@@ -15,12 +15,16 @@ import pymunk
 
 from time import time
 
+from guppy import hpy; hp=hpy()
+
 BOARD = 'bigger'
 board_data = get_board_data(BOARD)
 platform_count = len(board_data.get('platforms'))
 
-#sim = SlantSim()
-sim = HeadlessSlantSim()
+#sim_class = SlantSim
+sim_class = HeadlessSlantSim
+
+sim = sim_class()
 
 loop_counter = 0
 start_time = None
@@ -34,16 +38,16 @@ def fitness_test(chromosome):
     sim.reset()
     sim.board_name = BOARD
     sim.populate_from_board()
-#    reload(pymunk) # not sure if i have to do this any more
+
     for data,angle in zip(sim.platform_data,chromosome):
         print 'angle: %s' % angle
         data['angle'] = angle
     print
+
     sim.run()
     score = sim.score
 
-    if loop_counter % 2 == 0:
-        print 'loops/s:',loop_counter/(time()-start_time)
+    print 'loops/s:',loop_counter/(time()-start_time)
 
     return score
 
@@ -52,8 +56,8 @@ genome.setParams(randmin=0,randmax=180)
 
 genome.evaluator.set(fitness_test)
 
-GENERATIONS = 100
-POPULATION = 20
+GENERATIONS = 500
+POPULATION = 5
 
 ga = GSimpleGA.GSimpleGA(genome)
 ga.setGenerations(GENERATIONS)
